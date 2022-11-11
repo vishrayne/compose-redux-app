@@ -3,27 +3,53 @@ package com.vishrayne.myfirstreduxapp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vishrayne.myfirstreduxapp.model.domain.Product
+import com.vishrayne.myfirstreduxapp.model.ui.UiProduct
+import com.vishrayne.myfirstreduxapp.redux.ApplicationState
+import com.vishrayne.myfirstreduxapp.redux.Store
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val productRepository: ProductRepository
+    private val productRepository: ProductRepository,
+    private val store: Store<ApplicationState>
 ) : ViewModel() {
-    private val _productsFlow = MutableStateFlow<List<Product>>(listOf())
-    val productsFlow: StateFlow<List<Product>> = _productsFlow
+    val productsFlow: StateFlow<List<UiProduct>> = combine(
+        store.stateFlow.map { it.products },
+        store.stateFlow.map { it.favoriteProductIds }
+    ) { products, favoriteIds ->
+        products.map {
+            UiProduct(
+                product = it,
+                isFavorite = favoriteIds.contains(it.id)
+            )
+        }
+    }
+        .distinctUntilChanged()
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(),
-            listOf()
+            emptyList()
         )
 
     fun refreshProducts() = viewModelScope.launch {
         val domainProducts = productRepository.fetchAllProducts()
-        _productsFlow.update {
-            domainProducts
+        store.update { state ->
+            state.copy(products = domainProducts)
+        }
+    }
+
+    fun onFavoriteClick(selectedProductId: Int) = viewModelScope.launch {
+        store.update { state ->
+            val newFavoriteIds = if (state.favoriteProductIds.contains(selectedProductId))
+                state.favoriteProductIds.filter { it != selectedProductId }.toSet()
+            else
+                state.favoriteProductIds + selectedProductId
+
+            state.copy(favoriteProductIds = newFavoriteIds)
         }
     }
 }

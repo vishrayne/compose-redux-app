@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import com.vishrayne.myfirstreduxapp.model.domain.Product
+import com.vishrayne.myfirstreduxapp.model.ui.UiProduct
 import com.vishrayne.myfirstreduxapp.ui.theme.MyfirstreduxappTheme
 import java.math.BigDecimal
 
@@ -40,6 +41,9 @@ fun MainScreen() {
         products = products,
         onAddToCart = { id ->
             Log.d("StoreItem", "OnAddToCart for $id clicked!")
+        },
+        onFavoriteClick = { id ->
+            mainViewModel.onFavoriteClick(id)
         }
     )
 
@@ -50,23 +54,20 @@ fun MainScreen() {
 
 @Composable
 fun StoreItems(
-    products: List<Product>,
+    products: List<UiProduct>,
     onAddToCart: (productId: Int) -> Unit,
+    onFavoriteClick: (productId: Int) -> Unit,
 ) {
     LazyColumn() {
         items(
             products,
-            key = { product -> product.id }
-        ) { product ->
-            val (isFavorite, setFavorite) = rememberSaveable(product.id) {
-                mutableStateOf(false)
-            }
-
+            key = { uiProduct -> uiProduct.product.id }
+        ) { uiProduct ->
             StoreItemRow(
-                product,
+                uiProduct.product,
                 onAddToCart = onAddToCart,
-                isFavorite,
-                onFavoriteClick = { setFavorite(!isFavorite) }
+                uiProduct.isFavorite,
+                onFavoriteClick = onFavoriteClick
             )
         }
     }
@@ -77,7 +78,7 @@ fun StoreItemRow(
     product: Product,
     onAddToCart: (productId: Int) -> Unit,
     isFavorite: Boolean,
-    onFavoriteClick: () -> Unit,
+    onFavoriteClick: (productId: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -115,7 +116,7 @@ fun StoreItemRow(
                     IconToggleButton(
                         checked = isFavorite,
                         onCheckedChange = {
-                            onFavoriteClick()
+                            onFavoriteClick(product.id)
                         },
                         modifier = Modifier
                             .wrapContentSize()
