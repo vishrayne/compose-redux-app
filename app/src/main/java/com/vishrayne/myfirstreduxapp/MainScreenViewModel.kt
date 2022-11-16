@@ -2,18 +2,16 @@ package com.vishrayne.myfirstreduxapp
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vishrayne.myfirstreduxapp.model.domain.Product
 import com.vishrayne.myfirstreduxapp.model.ui.UiProduct
 import com.vishrayne.myfirstreduxapp.redux.ApplicationState
 import com.vishrayne.myfirstreduxapp.redux.Store
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(
+class MainScreenViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val store: Store<ApplicationState>
 ) : ViewModel() {

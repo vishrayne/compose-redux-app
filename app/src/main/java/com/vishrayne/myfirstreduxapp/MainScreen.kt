@@ -5,9 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,7 +14,6 @@ import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +22,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import com.vishrayne.myfirstreduxapp.model.domain.Product
@@ -32,10 +31,11 @@ import com.vishrayne.myfirstreduxapp.model.ui.UiProduct
 import com.vishrayne.myfirstreduxapp.ui.theme.MyfirstreduxappTheme
 import java.math.BigDecimal
 
+@OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun MainScreen() {
-    val mainViewModel: MainViewModel = viewModel()
-    val products by mainViewModel.productsFlow.collectAsState()
+    val mainScreenViewModel: MainScreenViewModel = viewModel()
+    val products by mainScreenViewModel.productsFlow.collectAsStateWithLifecycle()
 
     StoreItems(
         products = products,
@@ -43,12 +43,12 @@ fun MainScreen() {
             Log.d("StoreItem", "OnAddToCart for $id clicked!")
         },
         onFavoriteClick = { id ->
-            mainViewModel.onFavoriteClick(id)
+            mainScreenViewModel.onFavoriteClick(id)
         }
     )
 
     LaunchedEffect(true) {
-        mainViewModel.refreshProducts()
+        mainScreenViewModel.refreshProducts()
     }
 }
 
