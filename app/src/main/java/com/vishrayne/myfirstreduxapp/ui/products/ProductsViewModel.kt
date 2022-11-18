@@ -1,4 +1,4 @@
-package com.vishrayne.myfirstreduxapp
+package com.vishrayne.myfirstreduxapp.ui.products
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainScreenViewModel @Inject constructor(
+class ProductsViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val store: Store<ApplicationState>
 ) : ViewModel() {

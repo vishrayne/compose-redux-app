@@ -1,4 +1,4 @@
-package com.vishrayne.myfirstreduxapp
+package com.vishrayne.myfirstreduxapp.ui.products
 
 import com.vishrayne.myfirstreduxapp.hilt.service.ProductsService
 import com.vishrayne.myfirstreduxapp.model.domain.Product

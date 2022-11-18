@@ -1,4 +1,4 @@
-package com.vishrayne.myfirstreduxapp
+package com.vishrayne.myfirstreduxapp.ui.products
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.util.Log
@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,9 +34,8 @@ import java.math.BigDecimal
 
 @OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
-fun MainScreen() {
-    val mainScreenViewModel: MainScreenViewModel = viewModel()
-    val products by mainScreenViewModel.productsFlow.collectAsStateWithLifecycle()
+fun ProductsScreen(productsViewModel: ProductsViewModel) {
+    val products by productsViewModel.productsFlow.collectAsStateWithLifecycle()
 
     StoreItems(
         products = products,
@@ -43,12 +43,12 @@ fun MainScreen() {
             Log.d("StoreItem", "OnAddToCart for $id clicked!")
         },
         onFavoriteClick = { id ->
-            mainScreenViewModel.onFavoriteClick(id)
+            productsViewModel.onFavoriteClick(id)
         }
     )
 
     LaunchedEffect(true) {
-        mainScreenViewModel.refreshProducts()
+        productsViewModel.refreshProducts()
     }
 }
 
