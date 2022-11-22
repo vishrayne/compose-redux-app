@@ -3,9 +3,12 @@ package com.vishrayne.myfirstreduxapp.ui.products
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,28 +25,31 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
+import com.vishrayne.myfirstreduxapp.model.domain.Filter
 import com.vishrayne.myfirstreduxapp.model.domain.Product
-import com.vishrayne.myfirstreduxapp.model.ui.UiProduct
+import com.vishrayne.myfirstreduxapp.model.ui.UiFilter
 import com.vishrayne.myfirstreduxapp.ui.theme.MyfirstreduxappTheme
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
 
 @OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun ProductsScreen(productsViewModel: ProductsViewModel) {
-    val products by productsViewModel.productsFlow.collectAsStateWithLifecycle()
+    val uiState by productsViewModel.productsFlow.collectAsStateWithLifecycle()
 
     StoreItems(
-        products = products,
+        uiState = uiState,
         onAddToCart = { id ->
             Log.d("StoreItem", "OnAddToCart for $id clicked!")
         },
         onFavoriteClick = { id ->
             productsViewModel.onFavoriteClick(id)
+        },
+        onFilterSelected = {
+            productsViewModel.onFilterSelected(it)
         }
     )
 
@@ -54,21 +60,44 @@ fun ProductsScreen(productsViewModel: ProductsViewModel) {
 
 @Composable
 fun StoreItems(
-    products: List<UiProduct>,
+    uiState: ProductsListUiState,
     onAddToCart: (productId: Int) -> Unit,
     onFavoriteClick: (productId: Int) -> Unit,
+    onFilterSelected: (filter: Filter) -> Unit,
 ) {
-    LazyColumn() {
-        items(
-            products,
-            key = { uiProduct -> uiProduct.product.id }
-        ) { uiProduct ->
-            StoreItemRow(
-                uiProduct.product,
-                onAddToCart = onAddToCart,
-                uiProduct.isFavorite,
-                onFavoriteClick = onFavoriteClick
-            )
+    val listState = rememberLazyListState()
+    // Remember a CoroutineScope to be able to launch
+    val coroutineScope = rememberCoroutineScope()
+
+    Column {
+        LazyRow() {
+            items(
+                uiState.filters.toList(),
+                key = { uiFilter -> uiFilter.filter.value }
+            ) { uiFilter ->
+                CategoryChip(
+                    uiFilter = uiFilter,
+                    onFilterSelected = {
+                        onFilterSelected(it)
+                        coroutineScope.launch { listState.animateScrollToItem(0) }
+                    },
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
+                )
+            }
+        }
+
+        LazyColumn(state = listState) {
+            items(
+                uiState.products,
+                key = { uiProduct -> uiProduct.product.id }
+            ) { uiProduct ->
+                StoreItemRow(
+                    uiProduct.product,
+                    onAddToCart = onAddToCart,
+                    uiProduct.isFavorite,
+                    onFavoriteClick = onFavoriteClick
+                )
+            }
         }
     }
 }
@@ -182,6 +211,69 @@ fun StoreItemRow(
                     }
                 }
             }
+        }
+    }
+}
+
+
+@Composable
+fun CategoryChip(
+    uiFilter: UiFilter,
+    onFilterSelected: (Filter) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val (bgColor, textColor) = if (uiFilter.isSelected) {
+        Pair(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)
+    } else {
+        Pair(MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.onSecondary)
+    }
+
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = bgColor,
+        modifier = modifier.clickable { onFilterSelected(uiFilter.filter) }
+    ) {
+        Text(
+            uiFilter.filter.displayText,
+            color = textColor,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CategoryChipSelectedPreview() {
+    val uiFilter = UiFilter(
+        Filter("Selected Category", "Selected Category"),
+        isSelected = true
+    )
+
+
+    MyfirstreduxappTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            CategoryChip(
+                uiFilter = uiFilter,
+                onFilterSelected = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CategoryChipNotSelectedPreview() {
+    val uiFilter = UiFilter(
+        Filter("Deselected Category", "Deselected Category"),
+        isSelected = false
+    )
+
+    MyfirstreduxappTheme {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            CategoryChip(
+                uiFilter = uiFilter,
+                onFilterSelected = {}
+            )
         }
     }
 }
